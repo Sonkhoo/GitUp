@@ -21,7 +21,7 @@ The goal is not feature density, but **honest daily progress**.
 
 **Auth Methods**
 * GitHub OAuth (primary)
-* Email magic link (optional)
+* Google OAuth (primary)
 * No passwords
 
 **First-Time Onboarding Flow**
