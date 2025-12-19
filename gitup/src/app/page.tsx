@@ -47,12 +47,23 @@ function Page() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [todoData, setTodoData] = useState<Record<string, DayData>>({});
   const [isClient, setIsClient] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     // Generate data only on client side to avoid hydration mismatch
     setIsClient(true);
     setTodoData(generateSampleData());
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [theme]);
 
   const getDayData = (date: string): DayData => {
     return todoData[date] || { date, completedCount: 0, todos: [] };
@@ -69,7 +80,15 @@ function Page() {
 
   return (
     <TooltipProvider>
-      <div className="container mx-auto p-8">
+      <div className="container mx-auto p-8 min-h-screen bg-background text-foreground">
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+            className="px-3 py-1 text-sm border border-border rounded hover:bg-accent"
+          >
+            {theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme'}
+          </button>
+        </div>
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Welcome to GitUp</h1>
           <p className="text-muted-foreground">Track your daily progress with GitHub-style heatmaps</p>
