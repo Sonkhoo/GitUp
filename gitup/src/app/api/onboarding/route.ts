@@ -7,6 +7,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { checkOnboardingStatus } from "@/lib/onboarding";
 
+// Define schema for onboarding data validation
 const onboardingSchema = z.object({
   displayName: z
     .string()
@@ -41,6 +42,7 @@ export async function GET() {
   }
 }
 
+// Handle onboarding submission
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
