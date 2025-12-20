@@ -60,12 +60,13 @@ export async function GET(request: NextRequest) {
         : new Date().toISOString().split('T')[0];
 
       const todoItem: Todo = {
-        id: todo.id.toString(),
-        text: todo.title,
-        date: dateKey,
-        completed: !!todo.completedAt,
+        id: todo.id,
+        title: todo.title,
+        isCompleted: !!todo.completedAt,
         completedAt: todo.completedAt?.toISOString(),
         createdAt: todo.createdAt?.toISOString() || new Date().toISOString(),
+        userId: todo.userId,
+        deletedAt: todo.deletedAt?.toISOString(),
       };
 
       if (!todosByDate.has(dateKey)) {
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
     // Convert to DayData array
     const heatmapData: DayData[] = Array.from(todosByDate.entries()).map(([date, dayTodos]) => ({
       date,
-      completedCount: dayTodos.filter(t => t.completed).length,
+      completedCount: dayTodos.filter(t => t.isCompleted).length,
       todos: dayTodos,
     }));
 

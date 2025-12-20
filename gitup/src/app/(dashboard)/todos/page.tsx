@@ -1,4 +1,5 @@
 "use client";
+import { revalidate } from "@/app/api/todo/route";
 import React, { useEffect, useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import { Heatmap } from "@/components/heatmap/TodoHeatmap";
@@ -8,22 +9,26 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { format, addDays, subDays } from "date-fns";
 import { FaArrowLeft, FaArrowRight, FaPlus, FaCheck } from "react-icons/fa";
 import "./todos.css";
+import { ModeToggle } from "@/components/ui/theme-toggle";
+
 
 const fetchTodosForDate = async (date: string): Promise<Todo[]> => {
   const res = await fetch(`/api/todo?date=${date}`);
   if (!res.ok) {
-    console.error("Failed to fetch todos for date:", date);
     return [];
   }
   const todos = await res.json();
-  console.log("Fetched todos for date:", todos.map((todo: Todo) => todo.title));
+  console.log("Fetched todos for date", date, todos);
   return todos;
 };
 
 const fetchHeatmapData = async (year: number): Promise<DayData[]> => {
   const res = await fetch(`/api/heatmap?year=${year}`);
-  if (!res.ok) return [];
-  return res.json();
+  if (!res.ok) {
+    return [];
+  }
+  const resData = await res.json();
+  return resData;
 };
 
 const createTodo = async (title: string, date: string) => {
@@ -38,6 +43,22 @@ const createTodo = async (title: string, date: string) => {
   }
   return res.json();
 };
+
+const toggleTodoComplete = async (todoId: number, completed: boolean) => {
+  const res = await fetch(`/api/todo/${todoId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ completed: !completed }),
+  });
+  if (!res.ok) {
+    console.error("Failed to toggle todo complete");
+    return false;
+  }
+  const resData = await res.json();
+  console.log("Toggled todo complete", resData);
+  return resData;
+};
+
 
 export default function TodosPage() {
   const [selectedDate, setSelectedDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
@@ -82,44 +103,40 @@ export default function TodosPage() {
     window.location.href = "/api/auth/signout";
   };
 
-  const handleCreateTodo = async () => {
-    if (!newTodo.trim()) return;
-    const createdTodo = await createTodo(newTodo, selectedDate);
-    if (createdTodo) {
-      setTodos((prev) => [...prev, createdTodo]);
-      setNewTodo("");
-      setShowModal(false);
-    }
-  };
-
   const handleAddTodo = async () => {
     if (!newTodoTitle.trim()) return;
-    // Call your API to create todo here
     const createdTodo = await createTodo(newTodoTitle, selectedDate);
     if (createdTodo) {
+      // Optimistically update todos
       setTodos((prev) => [...prev, createdTodo]);
       setNewTodoTitle("");
       inputRef.current?.focus();
+      // Re-fetch heatmap in background
+      fetchHeatmapData(year).then(setHeatmap);
     }
   };
 
   const handleToggleComplete = async (todoId: number, completed: boolean) => {
-    // Call your API to mark complete/incomplete here
-    // For now, just update local state
+    const success = await toggleTodoComplete(todoId, completed);
+    if (!success) return;
+    // Optimistically update todos
     setTodos((prev) =>
       prev.map((todo) =>
-        todo.id === todoId ? { ...todo, completed: !completed, completedAt: !completed ? new Date().toISOString() : undefined } : todo
+        todo.id === todoId ? { ...todo, isCompleted: !completed, completedAt: !completed ? new Date().toISOString() : undefined } : todo
       )
     );
+    // Re-fetch heatmap in background
+    fetchHeatmapData(year).then(setHeatmap);
   };
 
   // Sort todos: incomplete first, then completed
   const sortedTodos = [...todos].sort((a, b) => {
-    if (a.completed === b.completed) return 0;
-    return a.completed ? 1 : -1;
+    if (a.isCompleted === b.isCompleted) return 0;
+    return a.isCompleted ? 1 : -1;
   });
 
   return (
+    <>
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground pt-8">
         {/* <Navbar onSignOut={handleSignOut} /> */}
@@ -155,22 +172,22 @@ export default function TodosPage() {
               {sortedTodos.map((todo) => (
                 <li
                   key={todo.id}
-                  className={`flex items-center w-full max-w-sm px-1 py-1 transition-all duration-150 ${todo.completed ? 'todo-faded' : ''}`}
+                  className={`flex items-center w-full max-w-sm px-1 py-1 transition-all duration-150 ${todo.isCompleted ? 'todo-faded' : ''}`}
                   style={{ minHeight: '32px' }}
                 >
                   <button
-                    className={`todo-circle flex-shrink-0 mr-2 transition-colors hit-area ${todo.completed ? 'done' : ''}`}
-                    onClick={() => handleToggleComplete(todo.id, todo.completed)}
-                    aria-label={todo.completed ? 'Mark as incomplete' : 'Mark as complete'}
+                    className={`todo-circle flex-shrink-0 mr-2 transition-colors hit-area ${todo.isCompleted ? 'done' : ''}`}
+                    onClick={() => handleToggleComplete(todo.id, todo.isCompleted)}
+                    aria-label={todo.isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
                     style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}
                   >
                     <span className="circle-inner" style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid #888', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {todo.completed && <FaCheck className="text-[11px] text-[#68af5d]" />}
+                      {todo.isCompleted && <FaCheck className="text-[11px] text-[#68af5d]" />}
                     </span>
                   </button>
                   <span
-                    className={`flex-1 text-left todo-title ${todo.completed ? 'strike-lower completed-todo' : ''}`}
-                    style={todo.completed ? { opacity: 0.6, transform: 'translateY(2px)' } : {}}
+                    className={`flex-1 text-left todo-title${todo.isCompleted ? ' strike-lower completed-todo' : ''}`}
+                    style={todo.isCompleted ? { opacity: 0.6, transform: 'translateY(2px)', textDecoration: 'line-through' } : {}}
                   >
                     {todo.title}
                   </span>
@@ -214,5 +231,6 @@ export default function TodosPage() {
         </div>
       </div>
     </TooltipProvider>
+    </>
   );
 }

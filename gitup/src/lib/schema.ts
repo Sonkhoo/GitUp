@@ -1,5 +1,5 @@
 import { integer, pgTable, varchar, text, timestamp, index, uniqueIndex, uuid, boolean } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { is, relations } from "drizzle-orm";
 // Define User table
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -20,7 +20,7 @@ export const todos = pgTable("todo", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   userId: text("user_id").notNull().references(() => user.id),
   title: text("title").notNull(),
-
+  isCompleted: boolean("is_completed").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
   completedAt: timestamp("completed_at"),
   deletedAt: timestamp("deleted_at"),
