@@ -1,9 +1,21 @@
-import React from 'react'
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 
-function dashboard() {
+export default async function Dashboard() {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  
+    if (!session) {
+      redirect("/login");
+    }
   return (
-    <div>This is the dashboard page</div>
-  )
+    <div className="min-h-screen bg-background text-foreground p-8">
+      <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+      <p className="text-muted-foreground">
+        Welcome back, {session.user.name || session.user.email}!
+      </p>
+    </div>
+  );
 }
-
-export default dashboard
