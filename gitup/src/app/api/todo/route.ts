@@ -11,7 +11,7 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { todos } from "@/lib/schema";
-import { eq, and, isNull } from "drizzle-orm";
+import { eq, and, isNull, gte, lte } from "drizzle-orm";
 import { z } from "zod";
 
 const todoSchema = z.object({
@@ -77,7 +77,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get("date") || new Date().toISOString().split('T')[0];
-    const date = new Date(dateParam);
+    // Get start and end of the day
+    const start = new Date(dateParam + "T00:00:00.000Z");
+    const end = new Date(dateParam + "T23:59:59.999Z");
 
     const userTodos = await db
       .select()
@@ -85,7 +87,9 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(todos.userId, session.user.id),
-          eq(todos.createdAt, date),
+          // Use gte and lte for date range filtering
+          gte(todos.createdAt, start),
+          lte(todos.createdAt, end),
           isNull(todos.deletedAt)
         )
       );

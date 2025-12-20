@@ -71,7 +71,7 @@ export const Heatmap = ({
   }, [year]);
 
   return (
-    <div className="w-full overflow-x-auto scrollbar-thin">
+    <div className="overflow-x-auto scrollbar-thin mx-auto w-fit">
       <div className="inline-block p-4 rounded-lg border" style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--background))' }}>
         {/* Year title */}
         <div className="mb-4">

@@ -1,10 +1,11 @@
 export interface Todo {
-  id: string;
-  text: string;
-  date: string; // YYYY-MM-DD format
-  completed: boolean;
-  completedAt?: string; // ISO timestamp
-  createdAt: string; // ISO timestamp
+  id: number; // Matches the integer primary key in the schema
+  userId: string; // Foreign key referencing the user
+  title: string; // Updated to match the schema field name
+  completed: boolean; // Derived from the presence of completedAt
+  completedAt?: string; // ISO timestamp for when the todo was completed
+  createdAt: string; // ISO timestamp for when the todo was created
+  deletedAt?: string; // ISO timestamp for soft deletion
 }
 
 export interface DayData {

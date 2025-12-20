@@ -11,7 +11,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { DayData, Todo } from "@/types/todo";
 
-// GET /api/heatmap/todos?year=2025
+// GET /api/heatmap?year=2025
 export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
