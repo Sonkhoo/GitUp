@@ -1,94 +1,57 @@
 "use client";
-import { revalidate } from "@/app/api/todo/route";
-import React, { useEffect, useState, useRef } from "react";
-import Navbar from "@/components/Navbar";
+import useSWR from 'swr';
+import { mutate } from 'swr';
+import React, { useState, useRef } from "react";
+import { FaTimes } from "react-icons/fa";
 import { Heatmap } from "@/components/heatmap/TodoHeatmap";
 import { DayData, Todo } from "@/types/todo";
-import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { format, addDays, subDays } from "date-fns";
-import { FaArrowLeft, FaArrowRight, FaPlus, FaCheck } from "react-icons/fa";
+import { format, addDays } from "date-fns";
+import { FaArrowLeft, FaArrowRight, FaCheck } from "react-icons/fa";
 import "./todos.css";
-import { ModeToggle } from "@/components/ui/theme-toggle";
 
-
-const fetchTodosForDate = async (date: string): Promise<Todo[]> => {
-  const res = await fetch(`/api/todo?date=${date}`);
-  if (!res.ok) {
-    return [];
-  }
-  const todos = await res.json();
-  console.log("Fetched todos for date", date, todos);
-  return todos;
-};
-
-const fetchHeatmapData = async (year: number): Promise<DayData[]> => {
-  const res = await fetch(`/api/heatmap?year=${year}`);
-  if (!res.ok) {
-    return [];
-  }
-  const resData = await res.json();
-  return resData;
-};
-
-const createTodo = async (title: string, date: string) => {
-  const res = await fetch(`/api/todo`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, date }),
-  });
-  if (!res.ok) {
-    console.error("Failed to create todo");
-    return null;
-  }
-  return res.json();
-};
-
-const toggleTodoComplete = async (todoId: number, completed: boolean) => {
-  const res = await fetch(`/api/todo/${todoId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ completed: !completed }),
-  });
-  if (!res.ok) {
-    console.error("Failed to toggle todo complete");
-    return false;
-  }
-  const resData = await res.json();
-  console.log("Toggled todo complete", resData);
-  return resData;
-};
-
+const fetcher = (url: string) => fetch(url).then(r => r.json());
 
 export default function TodosPage() {
   const [selectedDate, setSelectedDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [heatmap, setHeatmap] = useState<DayData[]>([]);
   const [year, setYear] = useState(() => new Date().getFullYear());
-  const [loading, setLoading] = useState(false);
-  const [newTodo, setNewTodo] = useState("");
-  const [showModal, setShowModal] = useState(false);
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setLoading(true);
-    fetchTodosForDate(selectedDate).then(setTodos).finally(() => setLoading(false));
-  }, [selectedDate]);
+  // SWR for todos - auto caches and deduplicates
+  const { data: todos = [], isLoading: todosLoading, mutate: mutateTodos } = useSWR<Todo[]>(
+    `/api/todo?date=${selectedDate}`,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 2000,
+    }
+  );
 
-  useEffect(() => {
-    fetchHeatmapData(year).then(setHeatmap);
-  }, [year]);
+  // SWR for heatmap - auto caches and deduplicates
+  const { data: heatmap = [], mutate: mutateHeatmap } = useSWR<DayData[]>(
+    `/api/heatmap?year=${year}`,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+    }
+  );
 
   const getDayData = (date: string): DayData => {
     return (
-      heatmap.find((d) => d.date === date) || {
+      heatmap.find((d) => d.date === date ) || {
         date,
         completedCount: 0,
         todos: [],
       }
     );
   };
+
 
   const handleDateChange = (days: number) => {
     const newDate = format(addDays(new Date(selectedDate), days), "yyyy-MM-dd");
@@ -98,35 +61,164 @@ export default function TodosPage() {
     }
   };
 
-  const handleSignOut = () => {
-    // Implement sign out logic here (e.g., call /api/auth/signout and redirect)
-    window.location.href = "/api/auth/signout";
-  };
-
   const handleAddTodo = async () => {
     if (!newTodoTitle.trim()) return;
-    const createdTodo = await createTodo(newTodoTitle, selectedDate);
-    if (createdTodo) {
-      // Optimistically update todos
-      setTodos((prev) => [...prev, createdTodo]);
+
+    // Optimistic update for todos
+    const optimisticTodo = {
+      id: Date.now(), // temporary ID
+      title: newTodoTitle,
+      isCompleted: false,
+      userId: '',
+      createdAt: selectedDate,
+      completedAt: undefined,
+      deletedAt: undefined,
+    };
+
+    // Update todos optimistically
+    mutateTodos([...todos, optimisticTodo], false);
+
+    // Update heatmap optimistically
+    mutateHeatmap(
+      heatmap.map(day => 
+        day.date === selectedDate 
+          ? { ...day, todos: [...day.todos, optimisticTodo] }
+          : day
+      ),
+      false
+    );
+
+    // Make API call
+    const res = await fetch(`/api/todo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: newTodoTitle, date: selectedDate }),
+    });
+
+    if (res.ok) {
+      // Revalidate both to get accurate data from server
+      mutateTodos();
+      mutateHeatmap();
       setNewTodoTitle("");
       inputRef.current?.focus();
-      // Re-fetch heatmap in background
-      fetchHeatmapData(year).then(setHeatmap);
+    } else {
+      // Rollback on error
+      mutateTodos();
+      mutateHeatmap();
     }
   };
 
   const handleToggleComplete = async (todoId: number, completed: boolean) => {
-    const success = await toggleTodoComplete(todoId, completed);
-    if (!success) return;
-    // Optimistically update todos
-    setTodos((prev) =>
-      prev.map((todo) =>
-        todo.id === todoId ? { ...todo, isCompleted: !completed, completedAt: !completed ? new Date().toISOString() : undefined } : todo
-      )
+    // Optimistic update for todos
+    const updatedTodos = todos.map(todo =>
+      todo.id === todoId
+        ? { ...todo, isCompleted: !completed, completedAt: !completed ? new Date().toISOString() : undefined }
+        : todo
     );
-    // Re-fetch heatmap in background
-    fetchHeatmapData(year).then(setHeatmap);
+    mutateTodos(updatedTodos, false);
+
+    // Optimistic update for heatmap
+    const updatedHeatmap = heatmap.map(day => {
+      if (day.date === selectedDate) {
+        const updatedDayTodos = day.todos.map(todo =>
+          todo.id === todoId ? { ...todo, isCompleted: !completed } : todo
+        );
+        const newCompletedCount = updatedDayTodos.filter(t => t.isCompleted).length;
+        return { ...day, todos: updatedDayTodos, completedCount: newCompletedCount };
+      }
+      return day;
+    });
+    mutateHeatmap(updatedHeatmap, false);
+
+    // Make API call
+    const res = await fetch(`/api/todo/${todoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completed: !completed }),
+    });
+
+    if (res.ok) {
+      // Revalidate to get accurate data
+      mutateTodos();
+      mutateHeatmap();
+    } else {
+      // Rollback on error
+      mutateTodos();
+      mutateHeatmap();
+    }
+  };
+
+  // Delete todo handler
+  const handleDeleteTodo = async (todoId: number) => {
+    // Optimistic update for todos
+    const updatedTodos = todos.filter(todo => todo.id !== todoId);
+    mutateTodos(updatedTodos, false);
+
+    // Optimistic update for heatmap
+    const updatedHeatmap = heatmap.map(day => {
+      if (day.date === selectedDate) {
+        const updatedDayTodos = day.todos.filter(todo => todo.id !== todoId);
+        const newCompletedCount = updatedDayTodos.filter(t => t.isCompleted).length;
+        return { ...day, todos: updatedDayTodos, completedCount: newCompletedCount };
+      }
+      return day;
+    });
+    mutateHeatmap(updatedHeatmap, false);
+
+    // Make API call
+    const res = await fetch(`/api/todo/${todoId}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      mutateTodos();
+      mutateHeatmap();
+    } else {
+      // Rollback on error
+      mutateTodos();
+      mutateHeatmap();
+    }
+  };
+
+  // Start editing a todo
+  const handleStartEdit = (todo: Todo) => {
+    setEditingId(todo.id);
+    setEditingTitle(todo.title);
+    setTimeout(() => {
+      editInputRef.current?.focus();
+    }, 0);
+  };
+
+  // Submit rename
+  const handleRenameTodo = async (todoId: number) => {
+    const trimmed = editingTitle.trim();
+    if (!trimmed) return;
+    // Optimistic update
+    const updatedTodos = todos.map(todo =>
+      todo.id === todoId ? { ...todo, title: trimmed } : todo
+    );
+    mutateTodos(updatedTodos, false);
+    // Optimistic update for heatmap
+    const updatedHeatmap = heatmap.map(day => {
+      if (day.date === selectedDate) {
+        const updatedDayTodos = day.todos.map(todo =>
+          todo.id === todoId ? { ...todo, title: trimmed } : todo
+        );
+        return { ...day, todos: updatedDayTodos };
+      }
+      return day;
+    });
+    mutateHeatmap(updatedHeatmap, false);
+    // API call
+    await fetch(`/api/todo/${todoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: trimmed }),
+    });
+    mutateTodos();
+    mutateHeatmap();
+    setEditingId(null);
+    setEditingTitle("");
   };
 
   // Sort todos: incomplete first, then completed
@@ -136,10 +228,8 @@ export default function TodosPage() {
   });
 
   return (
-    <>
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground pt-8">
-        {/* <Navbar onSignOut={handleSignOut} /> */}
         <main className="max-w-2xl mx-auto p-4">
           {/* Date selector */}
           <div className="flex items-center justify-between mb-4">
@@ -185,12 +275,44 @@ export default function TodosPage() {
                       {todo.isCompleted && <FaCheck className="text-[11px] text-[#68af5d]" />}
                     </span>
                   </button>
-                  <span
-                    className={`flex-1 text-left todo-title${todo.isCompleted ? ' strike-lower completed-todo' : ''}`}
-                    style={todo.isCompleted ? { opacity: 0.6, transform: 'translateY(2px)', textDecoration: 'line-through' } : {}}
+                  {editingId === todo.id ? (
+                    <input
+                      ref={editInputRef}
+                      className={`flex-1 bg-transparent outline-none border-b border-border px-1 py-0.5 text-foreground text-sm todo-title${todo.isCompleted ? ' strike-lower completed-todo' : ''}`}
+                      style={todo.isCompleted ? { opacity: 0.6, transform: 'translateY(2px)', textDecoration: 'line-through' } : {}}
+                      value={editingTitle}
+                      onChange={e => setEditingTitle(e.target.value)}
+                      onBlur={() => setEditingId(null)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleRenameTodo(todo.id);
+                        if (e.key === 'Escape') setEditingId(null);
+                      }}
+                      maxLength={200}
+                    />
+                  ) : (
+                    <span
+                      className={`flex-1 text-left todo-title${todo.isCompleted ? ' strike-lower completed-todo' : ''}`}
+                      style={todo.isCompleted ? { opacity: 0.6, transform: 'translateY(2px)', textDecoration: 'line-through' } : {}}
+                      tabIndex={0}
+                      onClick={() => handleStartEdit(todo)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') handleStartEdit(todo);
+                      }}
+                      role="button"
+                      aria-label="Rename todo"
+                    >
+                      {todo.title}
+                    </span>
+                  )}
+                  <button
+                    className="ml-2 text-xs text-muted-foreground hover:text-destructive transition-colors hit-area"
+                    aria-label="Delete todo"
+                    title="Delete"
+                    style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, background: 'none', border: 'none', cursor: 'pointer' }}
+                    onClick={() => handleDeleteTodo(todo.id)}
                   >
-                    {todo.title}
-                  </span>
+                    <FaTimes />
+                  </button>
                 </li>
               ))}
               <li className="flex items-center w-full max-w-sm mt-1" style={{ minHeight: '32px' }}>
@@ -219,7 +341,8 @@ export default function TodosPage() {
             </ul>
           </div>
         </main>
-        {/* Heatmap now outside main, spans screen */}
+
+        {/* Heatmap */}
         <div className="w-full flex justify-center items-center mt-8 px-2">
           <div className="heatmap-container w-full max-w-5xl flex justify-center">
             <Heatmap
@@ -231,6 +354,5 @@ export default function TodosPage() {
         </div>
       </div>
     </TooltipProvider>
-    </>
   );
 }

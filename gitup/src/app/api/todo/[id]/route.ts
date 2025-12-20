@@ -12,7 +12,7 @@ const todoSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)").optional(),
 });
 
-// Unified toggle complete/incomplete
+// Unified PATCH: toggle complete/incomplete or rename
 export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
   try {
     const session = await auth.api.getSession({
@@ -27,12 +27,18 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
     const params = await context.params;
     const todoId = parseInt(params.id, 10);
     const body = await request.json().catch(() => ({}));
-    // expects { completed: boolean }
-    const { completed } = body;
+    // expects { completed?: boolean, title?: string }
+    const { completed, title } = body;
     const updateData: any = {};
     if (typeof completed === "boolean") {
       updateData.isCompleted = completed;
       updateData.completedAt = completed ? new Date() : null;
+    }
+    if (typeof title === "string" && title.trim().length > 0) {
+      updateData.title = title.trim();
+    }
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
     }
     await db
       .update(todos)
@@ -45,7 +51,7 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
       );
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Toggle todo complete error:", error);
+    console.error("Update todo error:", error);
     return NextResponse.json(
       { error: "Something went wrong" },
       { status: 500 }

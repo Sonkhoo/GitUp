@@ -47,7 +47,6 @@ export async function GET(request: NextRequest) {
           eq(todos.userId, session.user.id),
           gte(todos.createdAt, yearStart),
           lte(todos.createdAt, yearEnd),
-          isNull(todos.deletedAt)
         )
       );
 
@@ -78,7 +77,7 @@ export async function GET(request: NextRequest) {
     // Convert to DayData array
     const heatmapData: DayData[] = Array.from(todosByDate.entries()).map(([date, dayTodos]) => ({
       date,
-      completedCount: dayTodos.filter(t => t.isCompleted).length,
+      completedCount: dayTodos.filter(t => t.isCompleted ).length,
       todos: dayTodos,
     }));
 

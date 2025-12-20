@@ -42,7 +42,7 @@ export const HeatmapCell = ({ date, dayData, onDateClick }: HeatmapCellProps) =>
   const formattedDate = format(dateObj, 'MMM d, yyyy');
   const dayName = format(dateObj, 'EEEE');
 
-  const completedTodos = dayData.todos.filter(t => t.completed);
+  const completedTodos = dayData.todos.filter(t => t.isCompleted).length;
 
   return (
     <Tooltip open={isOpen} onOpenChange={setIsOpen} delayDuration={0}>
