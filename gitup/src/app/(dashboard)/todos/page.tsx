@@ -9,6 +9,10 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { format, addDays } from "date-fns";
 import { FaArrowLeft, FaArrowRight, FaCheck } from "react-icons/fa";
 import "./todos.css";
+import confetti from "canvas-confetti"
+import { Highlighter } from "@/components/ui/highlighter"
+// import WelcomeSection from "@/components/WelcomeSection";
+
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -20,6 +24,7 @@ export default function TodosPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   // SWR for todos - auto caches and deduplicates
   const { data: todos = [], isLoading: todosLoading, mutate: mutateTodos } = useSWR<Todo[]>(
@@ -116,6 +121,34 @@ export default function TodosPage() {
         : todo
     );
     mutateTodos(updatedTodos, false);
+
+    // Trigger confetti burst if marking as completed
+    if (!completed) {
+      const colors = ["#63a167ff", "#ffffff"];
+      const end = Date.now() + 2 * 1000; // 2 seconds
+
+      const frame = () => {
+        if (Date.now() > end) return;
+        confetti({
+          particleCount: 1,
+          angle: 60,
+          spread: 35,
+          startVelocity: 40,
+          origin: { x: 0, y: 0.5 },
+          colors: colors,
+        });
+        confetti({
+          particleCount: 1,
+          angle: 120,
+          spread: 35,
+          startVelocity: 40,
+          origin: { x: 1, y: 0.5 },
+          colors: colors,
+        });
+        requestAnimationFrame(frame);
+      };
+      frame();
+    }
 
     // Optimistic update for heatmap
     const updatedHeatmap = heatmap.map(day => {
@@ -227,10 +260,12 @@ export default function TodosPage() {
     return a.isCompleted ? 1 : -1;
   });
 
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground pt-8">
         <main className="max-w-2xl mx-auto p-4">
+
           {/* Date selector */}
           <div className="flex items-center justify-between mb-4">
             <button
@@ -240,12 +275,14 @@ export default function TodosPage() {
             >
               <FaArrowLeft />
             </button>
+            <Highlighter color='#b3ea9dff' padding={6} strokeWidth={1.7} animationDuration={1500} action='underline'>
             <div
               className="date-large text-center font-bold"
               style={{ color: 'hsl(var(--foreground))', fontSize: '2rem', letterSpacing: '0.01em' }}
             >
               {format(new Date(selectedDate), "EEEE, MMMM d, yyyy")}
             </div>
+            </Highlighter>
             <button
               className="text-lg"
               onClick={() => handleDateChange(1)}

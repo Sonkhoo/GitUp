@@ -1,7 +1,9 @@
+import React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "next-themes"
+import { ThemeProvider } from "next-themes";
+import { ModeToggle } from "@/components/ui/theme-toggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +17,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "GitUp",
-  description: "A minimal, cozy productivity Todo and Habit Tracker that visualizes daily consistency using GitHub-style contribution heatmaps. It focuses on accountability over task hoarding, encouraging users to complete what they start instead of inflating activity.",
+  description:
+    "A minimal, cozy productivity Todo and Habit Tracker that visualizes daily consistency using GitHub-style contribution heatmaps. It focuses on accountability over task hoarding, encouraging users to complete what they start instead of inflating activity.",
 };
 
 export default function RootLayout({
@@ -29,11 +32,21 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: "1rem",
+              right: "1rem",
+              zIndex: 1000,
+            }}
           >
+            <ModeToggle />
+          </div>
           {children}
         </ThemeProvider>
       </body>
