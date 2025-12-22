@@ -7,7 +7,7 @@ interface UserWelcomeProps {
 
 export function UserWelcome({ displayName, userImage }: UserWelcomeProps) {
   return (
-    <div className="flex flex-col items-center mb-12">
+    <div className="flex flex-col items-center mb-4">
       <div className="relative mb-6">
         {userImage ? (
           <Image

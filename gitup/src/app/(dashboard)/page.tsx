@@ -19,16 +19,16 @@ export default async function Dashboard() {
   const userImage = session.user.image;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex justify-center items-center">
       {/* Main content - centered */}
-      <main className="flex flex-col items-center px-6 pb-12 pt-8">
+      <main className="flex flex-col items-center px-6 pb-4 pt-8">
         {/* Profile section */}
         <UserWelcome displayName={displayName} userImage={userImage || undefined} />
               <p className="text-muted-foreground text-center max-w-md">
         Ready to make today count?
       </p>
         {/* Cards section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mt-8">
           {/* Todo Card */}
           <Link href="/todos" className="block">
             <Card className="h-full cursor-pointer group">

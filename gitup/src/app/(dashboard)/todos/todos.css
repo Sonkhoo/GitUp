@@ -1,3 +1,6 @@
+.todo-title.no-underline {
+  border-bottom: none !important;
+}
 .todo-circle {
   width: 20px;
   height: 20px;
@@ -23,15 +26,13 @@
   line-height: 1.3rem;
   position: relative;
   width: 100%;
-  border-bottom: 1px solid #c1c1c15e; /* Always visible underline */
-  padding-bottom: 3px;
+  border-bottom: 1px solid hsl(var(--muted-foreground)); /* Muted, thin underline, theme-aware */
+  padding-bottom: 2px;
   background: transparent;
   transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
   font-family: var(--font-caveat);
   font-weight: 400;
-  /* border-radius: 6px;
-  border: 1px solid transparent; */
-  border: none;
+  border-radius: 0;
   outline: none !important;
 }
 
