@@ -1,18 +1,19 @@
 "use client";
+import "./todos.css";
 import useSWR from 'swr';
 import { mutate } from 'swr';
 import React, { useState, useRef } from "react";
-import { FaTimes } from "react-icons/fa";
+import { FaTimes, FaRegStickyNote } from "react-icons/fa";
 import { Heatmap } from "@/components/heatmap/TodoHeatmap";
 import { DayData, Todo } from "@/types/todo";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { format, addDays } from "date-fns";
+import { format, addDays, parseISO, isValid } from "date-fns";
 import { FaArrowLeft, FaArrowRight, FaCheck } from "react-icons/fa";
-import "./todos.css";
 import confetti from "canvas-confetti"
 import { Highlighter } from "@/components/ui/highlighter"
-// import WelcomeSection from "@/components/WelcomeSection";
-
+import { UserWelcome } from '@/components/profile/UserWelcome';
+import { authClient } from "@/lib/auth-client";
+import { redirect } from 'next/dist/client/components/navigation';
 
 const fetcher = (url: string) => fetch(url).then(r => r.json());
 
@@ -23,11 +24,13 @@ export default function TodosPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [descEditId, setDescEditId] = useState<number | null>(null);
+  const [editingDescription, setEditingDescription] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
   const [showConfetti, setShowConfetti] = useState(false);
 
   // SWR for todos - auto caches and deduplicates
-  const { data: todos = [], isLoading: todosLoading, mutate: mutateTodos } = useSWR<Todo[]>(
+  const { data: todosRaw = [], isLoading: todosLoading, mutate: mutateTodos } = useSWR<Todo[]>(
     `/api/todo?date=${selectedDate}`,
     fetcher,
     {
@@ -37,8 +40,28 @@ export default function TodosPage() {
     }
   );
 
+  // Ensure todos is always an array
+  const todos = Array.isArray(todosRaw) ? todosRaw : [];
+
+  // //Session hook
+  //  const {
+  //   data: session,
+  //   isPending,
+  //   error,
+  //   refetch,
+  // } = authClient.useSession();
+
+  // // Redirect if not logged in (client-side)
+  // React.useEffect(() => {
+  //   if (!isPending && !session) {
+  //     window.location.href = "/login";
+  //   }
+  // }, [isPending, session]);
+  
+
   // SWR for heatmap - auto caches and deduplicates
-  const { data: heatmap = [], mutate: mutateHeatmap } = useSWR<DayData[]>(
+
+  const { data: heatmapRaw = [], mutate: mutateHeatmap } = useSWR<DayData[]>(
     `/api/heatmap?year=${year}`,
     fetcher,
     {
@@ -46,6 +69,8 @@ export default function TodosPage() {
       dedupingInterval: 5000,
     }
   );
+  // Ensure heatmap is always an array
+  const heatmap = Array.isArray(heatmapRaw) ? heatmapRaw : [];
 
   const getDayData = (date: string): DayData => {
     return (
@@ -73,6 +98,7 @@ export default function TodosPage() {
     const optimisticTodo = {
       id: Date.now(), // temporary ID
       title: newTodoTitle,
+      description: editingDescription || "",
       isCompleted: false,
       userId: '',
       createdAt: selectedDate,
@@ -80,13 +106,10 @@ export default function TodosPage() {
       deletedAt: undefined,
     };
 
-    // Update todos optimistically
     mutateTodos([...todos, optimisticTodo], false);
-
-    // Update heatmap optimistically
     mutateHeatmap(
-      heatmap.map(day => 
-        day.date === selectedDate 
+      heatmap.map(day =>
+        day.date === selectedDate
           ? { ...day, todos: [...day.todos, optimisticTodo] }
           : day
       ),
@@ -97,17 +120,16 @@ export default function TodosPage() {
     const res = await fetch(`/api/todo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newTodoTitle, date: selectedDate }),
+      body: JSON.stringify({ title: newTodoTitle, date: selectedDate, description: editingDescription }),
     });
 
     if (res.ok) {
-      // Revalidate both to get accurate data from server
       mutateTodos();
       mutateHeatmap();
       setNewTodoTitle("");
+      setEditingDescription("");
       inputRef.current?.focus();
     } else {
-      // Rollback on error
       mutateTodos();
       mutateHeatmap();
     }
@@ -226,12 +248,10 @@ export default function TodosPage() {
   const handleRenameTodo = async (todoId: number) => {
     const trimmed = editingTitle.trim();
     if (!trimmed) return;
-    // Optimistic update
     const updatedTodos = todos.map(todo =>
       todo.id === todoId ? { ...todo, title: trimmed } : todo
     );
     mutateTodos(updatedTodos, false);
-    // Optimistic update for heatmap
     const updatedHeatmap = heatmap.map(day => {
       if (day.date === selectedDate) {
         const updatedDayTodos = day.todos.map(todo =>
@@ -242,7 +262,6 @@ export default function TodosPage() {
       return day;
     });
     mutateHeatmap(updatedHeatmap, false);
-    // API call
     await fetch(`/api/todo/${todoId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -254,20 +273,47 @@ export default function TodosPage() {
     setEditingTitle("");
   };
 
-  // Sort todos: incomplete first, then completed
-  const sortedTodos = [...todos].sort((a, b) => {
-    if (a.isCompleted === b.isCompleted) return 0;
-    return a.isCompleted ? 1 : -1;
-  });
+  // Edit description
+  const handleEditDescription = (todo: Todo) => {
+    setDescEditId(todo.id);
+    setEditingDescription(todo.description || "");
+  };
+
+  const handleSaveDescription = async (todoId: number) => {
+    const trimmed = editingDescription.trim();
+    // Optimistic update
+    const updatedTodos = todos.map(todo =>
+      todo.id === todoId ? { ...todo, description: trimmed } : todo
+    );
+    mutateTodos(updatedTodos, false);
+    const updatedHeatmap = heatmap.map(day => {
+      if (day.date === selectedDate) {
+        const updatedDayTodos = day.todos.map(todo =>
+          todo.id === todoId ? { ...todo, description: trimmed } : todo
+        );
+        return { ...day, todos: updatedDayTodos };
+      }
+      return day;
+    });
+    mutateHeatmap(updatedHeatmap, false);
+    await fetch(`/api/todo/${todoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ description: trimmed }),
+    });
+    mutateTodos();
+    mutateHeatmap();
+    setDescEditId(null);
+    setEditingDescription("");
+  };
 
 
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground pt-8">
         <main className="max-w-2xl mx-auto p-4">
-
           {/* Date selector */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-12">
             <button
               className="text-lg"
               onClick={() => handleDateChange(-1)}
@@ -294,12 +340,12 @@ export default function TodosPage() {
 
           {/* Todos list */}
           <div className="flex flex-col items-center mb-8 w-full">
-            <h2 className="text-md font-bold mb-2">Todos</h2>
-            <ul className="space-y-1 w-full max-w-sm">
-              {sortedTodos.map((todo) => (
+            {/* <h2 className="text-md font-bold mb-2">Todos</h2> */}
+            <ul className="space-y-1 w-full max-w-sm" style={{ fontFamily: "var(--font-covered-by-your-grace)", fontSize: "40px" }} >
+              {todos.map((todo) => (
                 <li
                   key={todo.id}
-                  className={`flex items-center w-full max-w-sm px-1 py-1 transition-all duration-150 ${todo.isCompleted ? 'todo-faded' : ''}`}
+                  className={`group flex items-start w-full max-w-sm px-1 py-2 transition-all duration-150 ${todo.isCompleted ? 'todo-faded' : ''}`}
                   style={{ minHeight: '32px' }}
                 >
                   <button
@@ -312,44 +358,97 @@ export default function TodosPage() {
                       {todo.isCompleted && <FaCheck className="text-[11px] text-[#68af5d]" />}
                     </span>
                   </button>
-                  {editingId === todo.id ? (
-                    <input
-                      ref={editInputRef}
-                      className={`flex-1 bg-transparent outline-none border-b border-border px-1 py-0.5 text-foreground text-sm todo-title${todo.isCompleted ? ' strike-lower completed-todo' : ''}`}
-                      style={todo.isCompleted ? { opacity: 0.6, transform: 'translateY(2px)', textDecoration: 'line-through' } : {}}
-                      value={editingTitle}
-                      onChange={e => setEditingTitle(e.target.value)}
-                      onBlur={() => setEditingId(null)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleRenameTodo(todo.id);
-                        if (e.key === 'Escape') setEditingId(null);
-                      }}
-                      maxLength={200}
-                    />
-                  ) : (
-                    <span
-                      className={`flex-1 text-left todo-title${todo.isCompleted ? ' strike-lower completed-todo' : ''}`}
-                      style={todo.isCompleted ? { opacity: 0.6, transform: 'translateY(2px)', textDecoration: 'line-through' } : {}}
-                      tabIndex={0}
-                      onClick={() => handleStartEdit(todo)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' || e.key === ' ') handleStartEdit(todo);
-                      }}
-                      role="button"
-                      aria-label="Rename todo"
-                    >
-                      {todo.title}
-                    </span>
-                  )}
-                  <button
-                    className="ml-2 text-xs text-muted-foreground hover:text-destructive transition-colors hit-area"
-                    aria-label="Delete todo"
-                    title="Delete"
-                    style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, background: 'none', border: 'none', cursor: 'pointer' }}
-                    onClick={() => handleDeleteTodo(todo.id)}
-                  >
-                    <FaTimes />
-                  </button>
+                  <div className="flex-1 flex flex-col">
+                    <div className="flex items-center gap-2">
+                      {editingId === todo.id ? (
+                        <input
+                          ref={editInputRef}
+                          className={`bg-transparent outline-none border-b border-border px-1 py-0.5 text-foreground text-sm todo-title${todo.isCompleted ? ' strike-lower completed-todo' : ''}`}
+                          style={todo.isCompleted ? { opacity: 0.6, transform: 'translateY(2px)', textDecoration: 'line-through' } : {}}
+                          value={editingTitle}
+                          onChange={e => setEditingTitle(e.target.value)}
+                          onBlur={() => setEditingId(null)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleRenameTodo(todo.id);
+                            if (e.key === 'Escape') setEditingId(null);
+                          }}
+                          maxLength={200}
+                        />
+                      ) : (
+                        <div className="flex justify-end items-center w-full gap-1">
+                          <span
+                            className={`text-left todo-title${todo.isCompleted ? ' strike-lower completed-todo' : ''}`}
+                            style={todo.isCompleted ? { opacity: 0.6, transform: 'translateY(2px)', textDecoration: 'line-through' } : {}}
+                            tabIndex={0}
+                            onClick={() => handleStartEdit(todo)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' || e.key === ' ') handleStartEdit(todo);
+                            }}
+                            role="button"
+                            aria-label="Rename todo"
+                          >
+                            {todo.title}
+                          </span>
+                          <button
+                            className="ml-1 opacity-70 hover:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted/60 align-middle"
+                            aria-label={todo.description ? "Edit description" : "Add description"}
+                            title={todo.description ? "Edit description" : "Add description"}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}
+                            onClick={e => { e.stopPropagation(); handleEditDescription(todo); }}
+                            tabIndex={0}
+                            onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter' || e.key === ' ') handleEditDescription(todo); }}
+                          >
+                            <FaRegStickyNote style={{ fontSize: 15, marginRight: 0, color: 'rgba(120,120,120,0.35)' }} />
+                          </button>
+                          <button
+                            className="text-xs text-muted-foreground hover:text-destructive transition-colors hit-area"
+                            aria-label="Delete todo"
+                            title="Delete"
+                            style={{ width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0, background: 'none', border: 'none', cursor: 'pointer' }}
+                            onClick={() => handleDeleteTodo(todo.id)}
+                          >
+                            <FaTimes />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {/* Description row, visually separated and cozy */}
+                    <div className="relative mt-2">
+                      {descEditId === todo.id ? (
+                        <textarea
+                          className="w-full bg-transparent outline-none resize-none text-xs text-foreground placeholder:text-muted-foreground rounded-lg animate-fade-in"
+                          placeholder="Add a description..."
+                          value={editingDescription}
+                          onChange={e => setEditingDescription(e.target.value)}
+                          onBlur={() => handleSaveDescription(todo.id)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveDescription(todo.id); }
+                            if (e.key === 'Escape') setDescEditId(null);
+                          }}
+                          maxLength={1000}
+                          rows={2}
+                          autoFocus
+                        />
+                      ) : (
+                        <>
+                          {todo.description && (
+                            <div
+                              className="text-xs italic text-muted-foreground mb-1 transition-all duration-200 cursor-pointer group/desc"
+                              tabIndex={0}
+                              role="button"
+                              aria-label="Edit description"
+                              onClick={() => handleEditDescription(todo)}
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' || e.key === ' ') handleEditDescription(todo);
+                              }}
+                            >
+                              {todo.description}
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </li>
               ))}
               <li className="flex items-center w-full max-w-sm mt-1" style={{ minHeight: '32px' }}>

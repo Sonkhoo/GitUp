@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { ModeToggle } from "@/components/ui/theme-toggle";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { CheckSquare, Flame } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-
+import { UserWelcome } from "@/components/profile/UserWelcome";
 export default async function Dashboard() {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -21,43 +20,13 @@ export default async function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Header with theme toggle */}
-      <header className="flex items-center justify-end p-6">
-        <ModeToggle />
-      </header>
-
       {/* Main content - centered */}
-      <main className="flex flex-col items-center px-6 pb-12">
+      <main className="flex flex-col items-center px-6 pb-12 pt-8">
         {/* Profile section */}
-        <div className="flex flex-col items-center mb-12">
-          {/* Profile image */}
-          <div className="relative mb-6">
-            {userImage ? (
-              <Image
-                src={userImage}
-                alt={displayName}
-                width={120}
-                height={120}
-                className="rounded-full border-4 border-primary/20 shadow-lg"
-              />
-            ) : (
-              <div className="w-[120px] h-[120px] rounded-full bg-muted border-4 border-primary/20 flex items-center justify-center">
-                <span className="text-4xl font-semibold text-muted-foreground">
-                  {displayName.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Welcome message */}
-          <h1 className="text-3xl font-bold mb-2">
-            Welcome, {displayName}! 👋
-          </h1>
-          <p className="text-muted-foreground text-center max-w-md">
-            Ready to make today count?
-          </p>
-        </div>
-
+        <UserWelcome displayName={displayName} userImage={userImage || undefined} />
+              <p className="text-muted-foreground text-center max-w-md">
+        Ready to make today count?
+      </p>
         {/* Cards section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
           {/* Todo Card */}

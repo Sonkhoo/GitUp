@@ -27,8 +27,8 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
     const params = await context.params;
     const todoId = parseInt(params.id, 10);
     const body = await request.json().catch(() => ({}));
-    // expects { completed?: boolean, title?: string }
-    const { completed, title } = body;
+    // expects { completed?: boolean, title?: string, description?: string }
+    const { completed, title, description } = body;
     const updateData: any = {};
     if (typeof completed === "boolean") {
       updateData.isCompleted = completed;
@@ -36,6 +36,11 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
     }
     if (typeof title === "string" && title.trim().length > 0) {
       updateData.title = title.trim();
+    }
+    if (typeof description === "string" && description.trim().length > 0) {
+      updateData.description = description.trim();
+    } else if (description === "") {
+      updateData.description = null;
     }
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });

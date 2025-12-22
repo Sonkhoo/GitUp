@@ -1,6 +1,6 @@
 .todo-circle {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   border: 2px solid #888; /* Always visible border */
   background: #ffffff00;
@@ -18,12 +18,12 @@
 }
 
 .todo-title {
-  font-size: 0.97rem;
-  line-height: 1.4;
+  font-size: 1.12rem;
+  line-height: 1.3rem;
   position: relative;
   width: 100%;
   border-bottom: 1px solid #c1c1c15e; /* Always visible underline */
-  padding-bottom: 1px;
+  padding-bottom: 3px;
   background: transparent;
   transition: color 0.2s;
 }
@@ -49,8 +49,8 @@
 }
 
 .hit-area {
-  width: 32px !important;
-  height: 32px !important;
+  width: 38px !important;
+  height: 38px !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -61,8 +61,8 @@
 }
 
 .circle-inner {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   border: 2px solid #888;
   background: transparent;

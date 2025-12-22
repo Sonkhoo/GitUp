@@ -2,6 +2,7 @@ export interface Todo {
   id: number; // Matches the integer primary key in the schema
   userId: string; // Foreign key referencing the user
   title: string; // Updated to match the schema field name
+  description?: string; // Optional description field
   isCompleted: boolean; // Derived from the presence of completedAt
   completedAt?: string; // ISO timestamp for when the todo was completed
   createdAt: string; // ISO timestamp for when the todo was created

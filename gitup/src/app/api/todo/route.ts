@@ -16,6 +16,7 @@ import { z } from "zod";
 
 const todoSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long").transform(val => val.trim()),
+  description: z.string().max(1000, "Description too long").optional().transform(val => val?.trim()),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format (YYYY-MM-DD)").optional(),
 });
 
@@ -43,14 +44,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, date } = result.data;
+    const { title, date, description } = result.data;
 
     const [newTodo] = await db.insert(todos).values({
       title,
+      description,
       userId: session.user.id,
-      createdAt: date ? new Date(date) : new Date(),
+      createdAt: new Date()
     }).returning();
-      revalidateTag(`todos-${session.user.id}-${date}`, 'auto');
+           revalidateTag(`todos-${session.user.id}-${date}`, 'auto');
       revalidateTag(`heatmap-${session.user.id}-${new Date(date ?? '').getFullYear()}`, 'auto');
     return NextResponse.json(newTodo, { status: 201 });
   } catch (error) {
@@ -78,23 +80,17 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const dateParam = searchParams.get("date") || new Date().toISOString().split('T')[0];
-    // Get start and end of the day
-    const start = new Date(dateParam + "T00:00:00.000Z");
-    const end = new Date(dateParam + "T23:59:59.999Z");
-
     const userTodos = await db
       .select()
       .from(todos)
       .where(
         and(
           eq(todos.userId, session.user.id),
-          // Use gte and lte for date range filtering
-          gte(todos.createdAt, start),
-          lte(todos.createdAt, end),
+          gte(todos.createdAt, new Date(`${dateParam}T00:00:00.000Z`)),
+          lte(todos.createdAt, new Date(`${dateParam}T23:59:59.999Z`)),
           isNull(todos.deletedAt)
         )
       );
-
     return NextResponse.json(userTodos);
   } catch (error) {
     console.error("Get todos error:", error);
