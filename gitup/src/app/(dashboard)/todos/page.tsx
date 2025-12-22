@@ -284,7 +284,6 @@ export default function TodosPage() {
   return (
     <TooltipProvider>
       <div className="w-full min-h-screen flex">
-        <Sidebar/>
         {/* Main content */}
         <div className="flex-1 flex flex-col items-center py-8 px-4">
           <main className="w-full max-w-3xl flex flex-col items-center">

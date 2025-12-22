@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-
 const navItems = [
   { label: "Home", href: "/" },
   { label: "Todo", href: "/todos" },
@@ -50,7 +49,7 @@ export default function Sidebar() {
 				<Link
 				key={item.href}
 				href={item.href}
-				className="card-hover rounded px-3 py-2 text-sm font-medium transition-all hover:bg-muted"
+				className={`card-hover rounded px-3 py-2 text-sm font-medium transition-all hover:bg-muted `}
 				>
 				{item.label}
 				</Link>

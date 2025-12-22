@@ -160,3 +160,47 @@
 .todo-description.completed-todo {
   text-decoration: none;
 }
+
+/* Adjust date size for mobile */
+.date-large {
+  font-size: 1.5rem; /* Smaller font size for mobile */
+  text-align: center; /* Center align for better visibility */
+}
+
+/* Adjust todo title size for mobile */
+.todo-title {
+  font-size: 1rem; /* Reduce font size */
+  line-height: 1.2rem; /* Adjust line height */
+}
+
+/* Make heatmap responsive */
+.heatmap-container {
+  overflow-x: auto; /* Prevent horizontal scrolling */
+  display: flex;
+  justify-content: center;
+}
+
+/* Ensure heatmap cells fit within the screen */
+.heatmap-container > div {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Add responsive styles for smaller screens */
+@media (max-width: 768px) {
+  .todo-title {
+    font-size: 0.9rem;
+  }
+
+  .todo-description {
+    font-size: 0.85rem;
+  }
+
+  .date-large {
+    font-size: 1.2rem;
+  }
+
+  .heatmap-container {
+    padding: 0 10px;
+  }
+}

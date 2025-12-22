@@ -19,19 +19,19 @@ export default async function Dashboard() {
   const userImage = session.user.image;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex justify-center items-center">
+    <div className="min-h-screen bg-background text-foreground flex justify-center items-start sm:items-center">
       {/* Main content - centered */}
-      <main className="flex flex-col items-center px-6 pb-4 pt-8">
+      <main className="flex flex-col items-center px-2 sm:px-6 pb-4 pt-8 w-full">
         {/* Profile section */}
         <UserWelcome displayName={displayName} userImage={userImage || undefined} />
-              <p className="text-muted-foreground text-center max-w-md">
-        Ready to make today count?
-      </p>
+        <p className="text-muted-foreground text-center max-w-md">
+          Ready to make today count?
+        </p>
         {/* Cards section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl mt-8">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 w-full max-w-xs sm:max-w-2xl mt-8 md:grid-cols-2">
           {/* Todo Card */}
-          <Link href="/todos" className="block">
-            <Card className="h-full cursor-pointer group">
+          <Link href="/todos" className="block w-full">
+            <Card className="h-full cursor-pointer group w-full">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
@@ -58,8 +58,8 @@ export default async function Dashboard() {
           </Link>
 
           {/* Habits Card */}
-          <Link href="/habits" className="block">
-            <Card className="h-full cursor-pointer group">
+          <Link href="/habits" className="block w-full">
+            <Card className="h-full cursor-pointer group w-full">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
