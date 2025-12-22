@@ -13,7 +13,10 @@ const todoSchema = z.object({
 });
 
 // Unified PATCH: toggle complete/incomplete or rename
-export async function PATCH(request: NextRequest, context: { params: { id: string } }) {
+export async function PATCH(
+  request: NextRequest,
+  context: { params: { id: string } | Promise<{ id: string }> }
+) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -24,8 +27,8 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
         { status: 401 }
       );
     }
-    const params = await context.params;
-    const todoId = parseInt(params.id, 10);
+  const params = await Promise.resolve(context.params); // ensures Promise is resolved
+  const todoId = parseInt(params.id, 10);
     const body = await request.json().catch(() => ({}));
     // expects { completed?: boolean, title?: string, description?: string }
     const { completed, title, description } = body;
@@ -65,7 +68,10 @@ export async function PATCH(request: NextRequest, context: { params: { id: strin
 }
 
 // Soft delete todo
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  context: { params: { id: string } | Promise<{ id: string }> }
+) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -76,8 +82,8 @@ export async function DELETE(request: NextRequest, context: { params: { id: stri
         { status: 401 }
       );
     }
-    const params = await context.params;
-    const todoId = parseInt(params.id, 10);
+     const params = await Promise.resolve(context.params); // handles possible Promise
+  const todoId = parseInt(params.id, 10);
 
     await db
       .update(todos)
