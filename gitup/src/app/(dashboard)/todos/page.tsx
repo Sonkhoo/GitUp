@@ -417,8 +417,17 @@ export default function TodosPage() {
                         <>
                           {todo.description && (
                             <div
-                              className="todo-description text-xs italic text-muted-foreground mb-1 transition-all duration-200 cursor-pointer group/desc"
-                              style={{ fontFamily: 'var(--font-caveat), cursive', fontWeight: 400, alignItems: 'center', display: 'flex', minHeight: '1.3rem', marginTop: 0 }}
+                              className={`todo-description text-xs italic mb-1 transition-all duration-200 cursor-pointer group/desc ${
+                                todo.isCompleted ? 'completed-todo' : 'text-muted-foreground'
+                              }`}
+                              style={{
+                                fontFamily: 'var(--font-caveat), cursive',
+                                fontWeight: 400,
+                                alignItems: 'center',
+                                display: 'flex',
+                                minHeight: '1.3rem',
+                                marginTop: 0,
+                              }}
                               tabIndex={0}
                               role="button"
                               aria-label="Edit description"

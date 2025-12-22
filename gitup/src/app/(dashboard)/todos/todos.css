@@ -90,14 +90,23 @@
 }
 
 .strike-lower.completed-todo {
-  text-decoration: line-through;
-  text-decoration-thickness: 1.1px;
-  text-decoration-color: #35343460;
-  text-decoration-skip-ink: none;
-  text-underline-offset: 0px;
+  position: relative;
   color: #35343460 !important;
+  text-decoration: none; /* remove default line-through */
   transition: color 0.15s, transform 0.15s;
 }
+
+.strike-lower.completed-todo::after {
+  content: '';
+  position: absolute;
+  top: 50%; /* vertical center */
+  left: 0;
+  width: 100%;
+  height: 1.1px; /* thickness of line */
+  background-color: #35343460;
+  transform: translateY(-50%);
+}
+
 
 .todo-description {
   overflow: hidden; /* hide scrollbar */
@@ -119,6 +128,7 @@
 .todo-description {
   overflow: auto;
   scrollbar-width: none; /* Firefox */
+  transition: color 0.2s ease, opacity 0.2s ease;
 }
 
 .todo-description::-webkit-scrollbar {
@@ -137,4 +147,15 @@
 /* Remove border on focus for todo description */
 .todo-description:focus {
   outline: none !important;
+}
+
+.completed-todo {
+  color: #35343460 !important; /* faded gray */
+  opacity: 0.7; /* optional: smooth fade */
+  transition: color 0.15s, opacity 0.15s;
+}
+
+/* If you want the line-through only for titles and not for descriptions, leave text-decoration out for descriptions */
+.todo-description.completed-todo {
+  text-decoration: none;
 }
