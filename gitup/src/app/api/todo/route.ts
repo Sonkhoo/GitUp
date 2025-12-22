@@ -11,7 +11,7 @@ import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import db from "@/lib/db";
 import { todos } from "@/lib/schema";
-import { eq, and, isNull, gte, lte } from "drizzle-orm";
+import { eq, and, isNull, gte, lte, desc } from "drizzle-orm";
 import { z } from "zod";
 
 const todoSchema = z.object({
@@ -90,7 +90,9 @@ export async function GET(request: NextRequest) {
           lte(todos.createdAt, new Date(`${dateParam}T23:59:59.999Z`)),
           isNull(todos.deletedAt)
         )
-      );
+      )
+      .orderBy(desc(todos.createdAt)); // Sort todos by creation time in descending order
+
     return NextResponse.json(userTodos);
   } catch (error) {
     console.error("Get todos error:", error);

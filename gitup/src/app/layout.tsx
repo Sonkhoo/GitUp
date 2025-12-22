@@ -1,7 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Covered_By_Your_Grace } from "next/font/google";
+import { Caveat } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/ui/theme-toggle";
@@ -11,8 +11,8 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const coveredByYourGrace = Covered_By_Your_Grace({
-  variable: "--font-covered-by-your-grace",
+const caveat = Caveat({
+  variable: "--font-caveat",
   subsets: ["latin"],
   weight: "400",
   style: "normal",
@@ -38,7 +38,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${coveredByYourGrace.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} antialiased`}
       >
         <ThemeProvider
           attribute="class"

@@ -17,6 +17,7 @@
   border-color: #68af5d;
 }
 
+/* Apply Caveat font to todo title */
 .todo-title {
   font-size: 1.12rem;
   line-height: 1.3rem;
@@ -25,7 +26,13 @@
   border-bottom: 1px solid #c1c1c15e; /* Always visible underline */
   padding-bottom: 3px;
   background: transparent;
-  transition: color 0.2s;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  font-family: var(--font-caveat);
+  font-weight: 400;
+  /* border-radius: 6px;
+  border: 1px solid transparent; */
+  border: none;
+  outline: none !important;
 }
 
 .strike-lower {
@@ -90,4 +97,44 @@
   text-underline-offset: 0px;
   color: #35343460 !important;
   transition: color 0.15s, transform 0.15s;
+}
+
+.todo-description {
+  overflow: hidden; /* hide scrollbar */
+  resize: none;     /* already set inline */
+  line-height: 20px;
+  font-family: var(--font-caveat);
+  font-weight: 400;
+  min-height: 1.3rem;
+  margin-top: 0;
+  font-size: 1rem;
+  border: none;
+  outline: none !important;
+
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.todo-description {
+  overflow: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.todo-description::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+.todo-description textarea {
+  overflow: hidden;
+}
+
+/* Remove border on focus for todo title */
+.todo-title:focus {
+  outline: none;
+}
+
+/* Remove border on focus for todo description */
+.todo-description:focus {
+  outline: none !important;
 }
