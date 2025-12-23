@@ -1,90 +1,117 @@
 "use client";
-
 import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { Home, ListTodo, Leaf, Users, Bell, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
+import { ModeToggle } from "@/components/ui/theme-toggle";
+
 const navItems = [
-  { label: "Home", href: "/" },
-  { label: "Todo", href: "/todos" },
-  { label: "Habits", href: "/habits" },
-  { label: "Friends", href: "/social" },
-  { label: "Notifications", href: "/notifications" },
+  { label: "Home", href: "/", icon: Home },
+  { label: "Todo", href: "/todos", icon: ListTodo },
+  { label: "Habits", href: "/habits", icon: Leaf },
+  { label: "Friends", href: "/social", icon: Users },
+  { label: "Notifications", href: "/notifications", icon: Bell },
 ];
 
 export default function Sidebar() {
-  const router = useRouter();
   const pathname = usePathname();
-  const [open, setOpen] = useState(true);
+  const [desktopOpen, setDesktopOpen] = useState(true);
 
   return (
     <>
-      {/* Sidebar */}
-		<aside
-		className={`fixed left-0 top-0 z-40 h-screen w-64 border-r transition-transform duration-200 ease-in-out ${
-			open ? "translate-x-0" : "-translate-x-full"
-		}`}
-		style={{
-			borderColor: "hsl(var(--border))",
-			background: "hsl(var(--background))",
-		}}
-		>
-        <div className="flex flex-col h-full px-4 py-6">
-          {/* Close button */}
-          <button
-            onClick={() => setOpen(false)}
-            aria-label="Close sidebar"
-            className="self-end mb-6 p-2 rounded hover:bg-muted"
-          >
-            <FaChevronLeft size={12} />
-          </button>
+      {/* Desktop sidebar */}
+      <aside
+        className={`
+          hidden md:flex fixed top-0 left-0 z-40 h-screen
+          bg-background border-r border-border shadow-card
+          flex-col transition-all duration-300
+          ${desktopOpen ? "w-64" : "w-16"}
+        `}
+      >
+        {/* Toggle button */}
+        <button
+          onClick={() => setDesktopOpen(!desktopOpen)}
+          className="absolute top-4 right-[-12px] w-6 h-6 bg-background border border-border rounded-full flex items-center justify-center shadow-card hover:bg-muted transition"
+        >
+          {desktopOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+        </button>
 
-          {/* Navigation */}
-          <nav className="flex flex-col gap-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
+        {/* Top-aligned nav items */}
+        <nav className="flex flex-col mt-6 gap-2 px-2">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`
+                  flex items-center gap-3 rounded-lg px-3 py-2 transition-colors
+                  ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"}
+                  ${desktopOpen ? "justify-start" : "justify-center"}
+                `}
+              >
+                <Icon size={18} strokeWidth={2} />
+                {desktopOpen && <span className="whitespace-nowrap">{item.label}</span>}
+              </Link>
+            );
+          })}
+        </nav>
 
-              return (
-				<Link
-				key={item.href}
-				href={item.href}
-				className={`card-hover rounded px-3 py-2 text-sm font-medium transition-all hover:bg-muted `}
-				>
-				{item.label}
-				</Link>
-              );
-            })}
-          </nav>
-
-          {/* Sign out */}
-          <div className="mt-auto">
-            <button
-              onClick={async () => {
-                await authClient.signOut({
-                  fetchOptions: {
-                    onSuccess: () => router.push("/login"),
-                  },
-                });
-              }}
-              className="text-sm font-medium text-destructive/70 hover:text-destructive"
-            >
-              Sign out
-            </button>
+        {/* Theme toggle and Sign-out at bottom */}
+        <div className="mt-auto px-2 mb-4 space-y-2">
+          <div className={`flex items-center ${desktopOpen ? "justify-start px-3" : "justify-center"}`}>
+            <ModeToggle />
           </div>
+          <button
+            onClick={() =>
+              authClient.signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/login"; } } })
+            }
+            className={`
+              flex items-center gap-3 rounded-lg px-3 py-2 w-full
+              text-destructive/70 hover:text-destructive hover:bg-muted transition
+              ${desktopOpen ? "justify-start" : "justify-center"}
+            `}
+          >
+            <LogOut size={18} strokeWidth={2} />
+            {desktopOpen && <span>Sign out</span>}
+          </button>
         </div>
       </aside>
 
-      {/* Floating open button (visible only when closed) */}
-      {!open && (
-			<button
-			onClick={() => setOpen(true)}
-			aria-label="Open sidebar"
-			className="fixed left-4 top-4 z-50 rounded-r bg-background border border-border p-2 shadow-card hover:bg-muted"
-			>
-          <FaChevronRight size={12} />
+      {/* Mobile floating navbar */}
+      <div
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-background border border-border rounded-xl shadow-card flex items-center justify-center px-2 py-1 gap-2 md:hidden"
+        style={{ maxWidth: "80vw" }}
+      >
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const active = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center w-8 h-6 rounded-lg transition-colors ${active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                }`}
+              title={item.label}
+            >
+              <Icon size={12} strokeWidth={2} />
+            </Link>
+          );
+        })}
+        <div className="w-px h-6 bg-border" />
+        <ModeToggle />
+        <button
+          onClick={() =>
+            authClient.signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/login"; } } })
+          }
+          className="flex flex-col items-center justify-center w-10 h-10 rounded-lg hover:bg-muted transition-colors text-destructive/70 hover:text-destructive"
+          title="Sign out"
+        >
+          <LogOut size={18} strokeWidth={2} />
         </button>
-      )}
+      </div>
     </>
   );
 }

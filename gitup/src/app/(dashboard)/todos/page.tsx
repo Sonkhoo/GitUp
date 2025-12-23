@@ -11,10 +11,10 @@ import { Highlighter } from "@/components/ui/highlighter";
 import { Sidebar as IconSidebar } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 // Lazy load heavy components
-const Heatmap = lazy(() => 
+const Heatmap = lazy(() =>
   import("@/components/heatmap/TodoHeatmap").then(mod => ({ default: mod.Heatmap }))
 );
-const UserWelcome = lazy(() => 
+const UserWelcome = lazy(() =>
   import('@/components/profile/UserWelcome').then(mod => ({ default: mod.UserWelcome }))
 );
 
@@ -145,7 +145,7 @@ export default function TodosPage() {
 
     // Optimistic updates
     mutateTodos([...todos, optimisticTodo], false);
-    
+
     // Clear inputs immediately for better UX
     setNewTodoTitle("");
     setNewTodoDescription("");
@@ -155,10 +155,10 @@ export default function TodosPage() {
       const res = await fetch(`/api/todo`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          title: newTodoTitle, 
-          date: selectedDate, 
-          description: newTodoDescription.trim() 
+        body: JSON.stringify({
+          title: newTodoTitle,
+          date: selectedDate,
+          description: newTodoDescription.trim()
         }),
       });
 
@@ -283,35 +283,37 @@ export default function TodosPage() {
 
   return (
     <TooltipProvider>
-      <div className="w-full flex flex-col items-center py-8 px-4">
+      <div className="w-full min-h-screen overflow-x-hidden">
         {/* Main content */}
-        <div className="flex-1 flex flex-col items-center py-8 px-4">
-          <main className="w-full max-w-3xl flex flex-col items-center">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 pt-24 md:pt-8 pb-6 sm:pb-8">
+          <main className="w-full flex flex-col items-center">
             {/* Date selector */}
-            <div className="flex items-center gap-4 mb-8">
-              <button
-                onClick={() => handleDateChange(-1)}
-                aria-label="Previous Day"
-                className="p-2 hover:bg-muted rounded transition-colors"
-              >
-                <FaArrowLeft />
-              </button>
+            <div className="flex flex-col items-center gap-3 mb-6 sm:mb-8">
               <Highlighter color='#b3ea9dff' padding={6} strokeWidth={1.7} animationDuration={1500} action='underline'>
-              <h2 className="date-large">
-                {format(new Date(selectedDate), "EEEE, MMMM d, yyyy")}
-              </h2>
+                <h2 className="date-large text-center text-base sm:text-xl md:text-2xl px-2">
+                  {format(new Date(selectedDate), "EEEE, MMMM d, yyyy")}
+                </h2>
               </Highlighter>
-              <button
-                onClick={() => handleDateChange(1)}
-                aria-label="Next Day"
-                className="p-2 hover:bg-muted rounded transition-colors"
-              >
-                <FaArrowRight />
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleDateChange(-1)}
+                  aria-label="Previous Day"
+                  className="p-2 hover:bg-muted rounded transition-colors flex-shrink-0"
+                >
+                  <FaArrowLeft />
+                </button>
+                <button
+                  onClick={() => handleDateChange(1)}
+                  aria-label="Next Day"
+                  className="p-2 hover:bg-muted rounded transition-colors flex-shrink-0"
+                >
+                  <FaArrowRight />
+                </button>
+              </div>
             </div>
 
             {/* Todos list with loading state */}
-            <div className="w-full max-w-md mt-4 mb-4">
+            <div className="w-full max-w-full sm:max-w-md mt-4 mb-4">
               <ul className="space-y-2">
                 {todosLoading && todos.length === 0 ? (
                   <>
@@ -322,11 +324,10 @@ export default function TodosPage() {
                 ) : (
                   todos.map((todo) => (
                     <li key={todo.id} className="flex flex-col w-full">
-                      <div className="flex items-center w-full max-w-sm" style={{ minHeight: '32px' }}>
+                      <div className="flex items-center w-full" style={{ minHeight: '32px' }}>
                         <button
-                          className={`todo-circle flex-shrink-0 hit-area ${
-                            todo.isCompleted ? 'done' : ''
-                          }`}
+                          className={`todo-circle flex-shrink-0 hit-area ${todo.isCompleted ? 'done' : ''
+                            }`}
                           onClick={() => handleToggleComplete(todo.id, todo.isCompleted)}
                           aria-label={todo.isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
                           style={{ padding: 0 }}
@@ -358,9 +359,8 @@ export default function TodosPage() {
                         ) : (
                           <div className="flex items-center flex-1 gap-2">
                             <span
-                              className={`todo-title flex-1 cursor-pointer ${
-                                todo.isCompleted ? 'strike-lower completed-todo' : ''
-                              }`}
+                              className={`todo-title flex-1 cursor-pointer ${todo.isCompleted ? 'strike-lower completed-todo' : ''
+                                }`}
                               style={{ fontFamily: 'var(--font-caveat)', fontWeight: 400 }}
                               onClick={() => handleStartEdit(todo)}
                               role="button"
@@ -397,34 +397,33 @@ export default function TodosPage() {
                       </div>
 
                       {/* Description */}
-                      <div className="w-full max-w-sm" style={{ paddingLeft: '38px' }}>
+                      <div className="w-full" style={{ paddingLeft: '38px' }}>
                         {descEditId === todo.id ? (
-                  <textarea
-                    ref={descRef}
-                    className="todo-description w-full resize-none bg-transparent border border-border rounded px-2 py-1"
-                    value={editingDescription}
-                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                      setEditingDescription(e.target.value)
-                    }
-                    onBlur={() => handleSaveDescription(todo.id)} // Confirm changes on blur
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSaveDescription(todo.id);
-                      }
-                      if (e.key === 'Escape') setDescEditId(null);
-                    }}
-                    maxLength={1000}
-                    rows={1}
-                    autoFocus
-                  />
+                          <textarea
+                            ref={descRef}
+                            className="todo-description w-full resize-none bg-transparent border border-border rounded px-2 py-1"
+                            value={editingDescription}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                              setEditingDescription(e.target.value)
+                            }
+                            onBlur={() => handleSaveDescription(todo.id)} // Confirm changes on blur
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSaveDescription(todo.id);
+                              }
+                              if (e.key === 'Escape') setDescEditId(null);
+                            }}
+                            maxLength={1000}
+                            rows={1}
+                            autoFocus
+                          />
                         ) : (
                           <>
                             {todo.description && (
                               <div
-                                className={`todo-description text-xs italic mb-1 transition-all duration-200 cursor-pointer group/desc ${
-                                  todo.isCompleted ? 'completed-todo' : 'text-muted-foreground'
-                                }`}
+                                className={`todo-description text-xs italic mb-1 transition-all duration-200 cursor-pointer group/desc ${todo.isCompleted ? 'completed-todo' : 'text-muted-foreground'
+                                  }`}
                                 style={{
                                   fontFamily: 'var(--font-caveat), cursive',
                                   fontWeight: 400,
@@ -452,7 +451,7 @@ export default function TodosPage() {
                 )}
 
                 {/* Add todo input */}
-                <li className="flex items-center w-full max-w-sm mt-1" style={{ minHeight: '32px' }}>
+                <li className="flex items-center w-full mt-1" style={{ minHeight: '32px' }}>
                   <button
                     className="todo-circle flex-shrink-0 mr-2 text-muted-foreground hover:bg-muted transition-colors hit-area"
                     onClick={() => inputRef.current?.focus()}
@@ -483,15 +482,13 @@ export default function TodosPage() {
           </main>
 
           {/* Heatmap with lazy loading */}
-          <div className="w-full flex justify-center items-center mt-8 px-2">
+          <div className="w-full mt-8">
             <Suspense fallback={<HeatmapSkeleton />}>
-              <div className="heatmap-container w-full max-w-5xl flex justify-center">
-                <Heatmap
-                  getDayData={getDayData}
-                  onDateClick={setSelectedDate}
-                  year={year}
-                />
-              </div>
+              <Heatmap
+                getDayData={getDayData}
+                onDateClick={setSelectedDate}
+                year={year}
+              />
             </Suspense>
           </div>
         </div>

@@ -39,15 +39,15 @@ export const Heatmap = ({
 
     days.forEach(day => {
       const dayOfWeek = getDay(day);
-      
+
       if (dayOfWeek === 0 && currentWeek.some(d => d !== null)) {
         weeks.push(currentWeek);
         currentWeek = Array(7).fill(null);
       }
-      
+
       currentWeek[dayOfWeek] = day;
     });
-    
+
     if (currentWeek.some(d => d !== null)) {
       weeks.push(currentWeek);
     }
@@ -71,17 +71,17 @@ export const Heatmap = ({
   }, [year]);
 
   return (
-    <div className="overflow-x-auto scrollbar-thin mx-auto w-fit">
-      <div className="inline-block p-4 rounded-lg border" style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--background))' }}>
+    <div className="overflow-x-auto scrollbar-thin mx-auto w-full sm:w-fit">
+      <div className="inline-block p-2 sm:p-4 rounded-lg border" style={{ borderColor: 'hsl(var(--border))', backgroundColor: 'hsl(var(--background))' }}>
         {/* Year title */}
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
+        <div className="mb-2 sm:mb-4">
+          <h3 className="text-xs sm:text-sm font-semibold" style={{ color: 'hsl(var(--foreground))' }}>
             {year} Contributions
           </h3>
         </div>
 
         {/* Month labels */}
-        <div className="flex mb-2" style={{ paddingLeft: '32px' }}>
+        <div className="flex mb-1 sm:mb-2" style={{ paddingLeft: '20px' }}>
           <div className="flex" style={{ gap: '2px' }}>
             {monthLabels.map((label, idx) => {
               const nextLabel = monthLabels[idx + 1];
@@ -89,7 +89,7 @@ export const Heatmap = ({
               return (
                 <div
                   key={`${label.month}-${label.weekIndex}`}
-                  className="text-xs font-mono flex-shrink-0"
+                  className="text-[10px] sm:text-xs font-mono flex-shrink-0"
                   style={{
                     color: 'hsl(var(--muted-foreground))',
                     width: `${columnSpan * 14}px`,
@@ -106,18 +106,18 @@ export const Heatmap = ({
         {/* Grid with day labels */}
         <div className="flex" style={{ gap: '3px' }}>
           {/* Day labels - 7 rows, one per day */}
-          <div className="flex flex-col mr-2" style={{ gap: '3px' }}>
+          <div className="flex flex-col mr-1 sm:mr-2" style={{ gap: '3px' }}>
             {DAYS.map((day) => (
               <div
                 key={day}
-                className="text-xs font-mono flex items-center justify-center flex-shrink-0"
+                className="text-[8px] sm:text-xs font-mono flex items-center justify-start flex-shrink-0"
                 style={{
-                  width: '24px',
+                  width: '16px',
                   height: '12px',
                   color: 'hsl(var(--muted-foreground))'
                 }}
               >
-                {day}
+                {day.slice(0, 1)}
               </div>
             ))}
           </div>

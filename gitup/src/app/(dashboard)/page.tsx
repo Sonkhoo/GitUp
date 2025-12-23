@@ -19,40 +19,29 @@ export default async function Dashboard() {
   const userImage = session.user.image;
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex justify-center items-start sm:items-center">
-      {/* Main content - centered */}
-      <main className="flex flex-col items-center px-2 sm:px-6 pb-4 pt-8 w-full">
-        {/* Profile section */}
+    <div className="h-screen bg-background text-foreground pt-20 md:pt-8 flex justify-center items-start sm:items-center overflow-hidden">
+      <main className="flex flex-col items-center px-4 sm:px-6 pb-8 w-full max-w-6xl mx-auto md:ml-64">
         <UserWelcome displayName={displayName} userImage={userImage || undefined} />
-        <p className="text-muted-foreground text-center max-w-md">
+        <p className="text-muted-foreground text-center max-w-md mt-2">
           Ready to make today count?
         </p>
-        {/* Cards section */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 w-full max-w-xs sm:max-w-2xl mt-8 md:grid-cols-2">
+
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 w-full max-w-xs sm:max-w-2xl mt-8 md:grid-cols-2 mx-auto">
           {/* Todo Card */}
           <Link href="/todos" className="block w-full">
             <Card className="h-full cursor-pointer group w-full">
+              {/* Card content */}
               <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <CheckSquare className="w-6 h-6" />
-                  </div>
-                  <CardTitle>Todos</CardTitle>
-                </div>
+                <CardTitle>
+                  <CheckSquare className="inline-block mr-2" />
+                  Todos
+                </CardTitle>
                 <CardDescription>
-                  Manage your daily tasks and watch your contribution graph grow.
+                  Stay organized and productive by managing your tasks.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="flex gap-1">
-                    <div className="w-3 h-3 rounded-sm bg-primary/20" />
-                    <div className="w-3 h-3 rounded-sm bg-primary/40" />
-                    <div className="w-3 h-3 rounded-sm bg-primary/60" />
-                    <div className="w-3 h-3 rounded-sm bg-primary" />
-                  </div>
-                  <span>Track your progress</span>
-                </div>
+                View and manage your to-do list.
               </CardContent>
             </Card>
           </Link>
@@ -61,21 +50,16 @@ export default async function Dashboard() {
           <Link href="/habits" className="block w-full">
             <Card className="h-full cursor-pointer group w-full">
               <CardHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <Flame className="w-6 h-6" />
-                  </div>
-                  <CardTitle>Habits</CardTitle>
-                </div>
+                <CardTitle>
+                  <Flame className="inline-block mr-2" />
+                  Habits
+                </CardTitle>
                 <CardDescription>
-                  Build consistency with daily habits and maintain your streaks.
+                  Build and track your daily habits for lasting change.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span className="text-lg">🔥</span>
-                  <span>Keep your streak alive</span>
-                </div>
+                View and manage your habit tracker.
               </CardContent>
             </Card>
           </Link>
