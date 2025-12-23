@@ -1,8 +1,8 @@
+import "./globals.css";
 import React from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Caveat } from "next/font/google";
-import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { ModeToggle } from "@/components/ui/theme-toggle";
 

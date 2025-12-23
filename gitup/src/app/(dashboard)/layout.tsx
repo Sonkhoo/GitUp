@@ -4,8 +4,12 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <>
-  <Sidebar/>
-  {children}
-  </>;
+  return (
+    <div className="flex min-h-screen w-full">
+      <Sidebar />
+      <main className="flex-1 overflow-hidden">
+        {children}
+      </main>
+    </div>
+  );
 }
