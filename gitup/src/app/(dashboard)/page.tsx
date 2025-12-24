@@ -19,8 +19,8 @@ export default async function Dashboard() {
   const userImage = session.user.image;
 
   return (
-    <div className="h-screen bg-background text-foreground pt-20 md:pt-8 flex justify-center items-start sm:items-center overflow-hidden">
-      <main className="flex flex-col items-center px-4 sm:px-6 pb-8 w-full max-w-6xl mx-auto md:ml-64">
+    <div className="h-screen bg-background text-foreground flex justify-center items-center overflow-hidden">
+      <main className="flex flex-col items-center px-4 sm:px-6 w-full max-w-6xl mx-auto">
         <UserWelcome displayName={displayName} userImage={userImage || undefined} />
         <p className="text-muted-foreground text-center max-w-md mt-2">
           Ready to make today count?

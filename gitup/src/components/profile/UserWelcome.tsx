@@ -25,7 +25,7 @@ export function UserWelcome({ displayName, userImage }: UserWelcomeProps) {
           </div>
         )}
       </div>
-      <h1 className="text-3xl font-bold mb-2">
+      <h1 className="text-3xl font-bold mb-2 text-center">
         Welcome, {displayName}! 👋
       </h1>
     </div>
