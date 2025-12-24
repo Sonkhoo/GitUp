@@ -7,8 +7,10 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen w-full">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
-        {children}
+      <main className="flex-1 overflow-auto flex items-center justify-center">
+        <div className="w-full">
+          {children}
+        </div>
       </main>
     </div>
   );

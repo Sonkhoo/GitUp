@@ -16,26 +16,28 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [desktopOpen, setDesktopOpen] = useState(true);
+  const [desktopOpen, setDesktopOpen] = useState(false);
 
   return (
     <>
+      {/* Toggle button - always visible */}
+      <button
+        onClick={() => setDesktopOpen(!desktopOpen)}
+        className={`hidden md:flex fixed top-4 z-50 w-8 h-8 bg-background border border-border rounded-full items-center justify-center shadow-card hover:bg-muted transition-all duration-300 ${desktopOpen ? "left-[244px]" : "left-2"
+          }`}
+      >
+        {desktopOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+      </button>
+
       {/* Desktop sidebar */}
       <aside
         className={`
-          hidden md:flex fixed top-0 left-0 z-40 h-screen
+          hidden md:flex fixed top-0 z-40 h-screen
           bg-background border-r border-border shadow-card
-          flex-col transition-all duration-300
-          ${desktopOpen ? "w-64" : "w-16"}
+          flex-col transition-all duration-300 w-64
+          ${desktopOpen ? "left-0" : "-left-64"}
         `}
       >
-        {/* Toggle button */}
-        <button
-          onClick={() => setDesktopOpen(!desktopOpen)}
-          className="absolute top-4 right-[-12px] w-6 h-6 bg-background border border-border rounded-full flex items-center justify-center shadow-card hover:bg-muted transition"
-        >
-          {desktopOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </button>
 
         {/* Top-aligned nav items */}
         <nav className="flex flex-col mt-6 gap-2 px-2">
